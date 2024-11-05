@@ -97,109 +97,78 @@ jQuery(function ($) {
         }
     });
 
-    $('#remove-all').on('click', function (e) {
-        e.preventDefault();
+   $('#remove-all').on('click', function (e) {
+    e.preventDefault();
 
-        $('#progress').hide();
+    $('#progress').hide();
 
-        $('#insert-all').removeClass('btn-success');
-        $('#insert-all').addClass('btn-primary');
-        $('#insert-all').html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_UPLOADED_LABEL_INSERT_ALL_BUTTON'));
+    $('#insert-all').removeClass('btn-success');
+    $('#insert-all').addClass('btn-primary');
+    $('#insert-all').html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_UPLOADED_LABEL_INSERT_ALL_BUTTON'));
 
-        $('#remove-all').hide();
-        $('#insert-all').hide();
+    $('#remove-all').hide();
+    $('#insert-all').hide();
 
-        var editor_text = null;
-        if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-            editor_text = CKEDITOR.instances.message.getData();
-        } else {
-            editor_text = sceditor.instance(document.getElementById('message')).val();
-        }
+    // Get editor content while preserving line breaks
+    let editor_text = '';
+    if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+        // For CKEditor, getData() already preserves formatting
+        editor_text = CKEDITOR.instances.message.getData();
+    } else {
+        // For SCEditor, get raw content with preserved line breaks
+        editor_text = sceditor.instance(document.getElementById('message')).val();
+    }
 
-        // Removing items in edit if they are present
-        if ($.isEmptyObject(filesedit) === false) {
-            const filesidinedittodelete = [];
-
-            $(filesedit).each(function (index, file) {
-                if ($('#kattachs-' + file.id).length === 0) {
-                    $('#kattach-list').append('<input id="kattachs-' + file.id + '" type="hidden" name="attachments[' + file.id + ']" value="1" />');
-                }
-
-                if ($('#kattach-' + file.id).length > 0) {
-                    $('#kattach-' + file.id).remove();
-                }
-
-                filesidinedittodelete.push(file.id);
-            });
-
-            $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_rem') + '&files_id_delete=' + JSON.stringify(filesidinedittodelete) + '&editor_text=' + editor_text,
-                type: 'POST'
-            })
-                .done(function (data) {
-                    $('#files').empty();
-
-                    if (data.text_prepared !== false) {
-                        if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-                            CKEDITOR.instances.message.setData(data.text_prepared);
-                        } else {
-                            sceditor.instance(document.getElementById('message')).insert(data.text_prepared);
-                        }
-                    }
-                })
-                .fail(function () {
-                    //TODO: handle the error of ajax request
-                });
-
-            filesedit = null;
-        }
-
-        const child = $('#kattach-list').find('input');
-        const filesidtodelete = [];
-
-        child.each(function (i, el) {
-            const elem = $(el);
-
-            if (!elem.attr('id').match("[a-z]{8}")) {
-                const fileid = elem.attr('id').match("[0-9]{1,8}");
-
-                if ($('#kattachs-' + fileid).length === 0) {
-                    $('#kattach-list').append('<input id="kattachs-' + fileid + '" type="hidden" name="attachments[' + fileid + ']" value="1" />');
-                }
-
-                if ($('#kattach-' + fileid).length > 0) {
-                    $('#kattach-' + fileid).remove();
-                }
-
-                filesidtodelete.push(fileid);
-            }
+    // Find all attachment BBCodes
+    const attachmentRegex = /\[attachment=([0-9]+)\]([^[\]]+)\[\/attachment\]/g;
+    const attachments = [];
+    let attachmentMatches;
+    while ((attachmentMatches = attachmentRegex.exec(editor_text)) !== null) {
+        attachments.push({
+            id: attachmentMatches[1],
+            filename: attachmentMatches[2]
         });
+    }
 
-        if (filesidtodelete.length !== 0) {
-            $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_rem') + '&files_id_delete=' + JSON.stringify(filesidtodelete) + '&editor_text=' + editor_text,
-                type: 'POST'
-            })
-                .done(function (data) {
-                    $('#files').empty();
+    // Remove all attachment BBCodes from the editor text
+    const cleanedEditorText = editor_text.replace(attachmentRegex, '');
 
-                    if (data.text_prepared !== false) {
-                        if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-                            CKEDITOR.instances.message.setData(data.text_prepared);
-                        } else {
-                            sceditor.instance(document.getElementById('message')).insert(data.text_prepared);
-                        }
-                    }
-                })
-                .fail(function () {
-                    //TODO: handle the error of ajax request
-                });
-        }
+    // Update the editor content with the cleaned-up text
+    if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+        CKEDITOR.instances.message.setData(cleanedEditorText);
+    } else {
+        sceditor.instance(document.getElementById('message')).val(cleanedEditorText);
+    }
 
-        $('#alert_max_file').remove();
+    // Remove all found attachments from the database
+    if (attachments.length > 0) {
+        $.ajax({
+            url: Joomla.getOptions('com_kunena.kunena_upload_files_rem'),
+            type: 'POST',
+            data: {
+                'files_id_delete': JSON.stringify(attachments.map(a => a.id)),
+                'editor_text': encodeURIComponent(editor_text)
+            }
+        })
+        .done(function () {
+            // Refresh the editor content to ensure all attachments are removed
+            if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+                CKEDITOR.instances.message.setData(cleanedEditorText);
+            } else {
+                sceditor.instance(document.getElementById('message')).val(cleanedEditorText);
+            }
+            $('#files').empty();
+        })
+        .fail(function () {
+            //TODO: handle the error of ajax request
+        });
+    }
 
-        fileCount = 0;
-    });
+    $('#alert_max_file').remove();
+
+    fileCount = 0;
+});
+
 
     $('#insert-all').bind('keypress keydown keyup', function(e){
 		if(e.keyCode == 13) { e.preventDefault(); }
