@@ -125,7 +125,7 @@ jQuery(function ($) {
     let attachmentMatches;
     while ((attachmentMatches = attachmentRegex.exec(editor_text)) !== null) {
         attachments.push({
-            id: attachmentMatches[1],
+            id: parseInt(attachmentMatches[1]),
             filename: attachmentMatches[2]
         });
     }
@@ -142,33 +142,44 @@ jQuery(function ($) {
 
     // Remove all found attachments from the database
     if (attachments.length > 0) {
-        $.ajax({
-            url: Joomla.getOptions('com_kunena.kunena_upload_files_rem'),
-            type: 'POST',
-            data: {
-                'files_id_delete': JSON.stringify(attachments.map(a => a.id)),
-                'editor_text': encodeURIComponent(editor_text)
-            }
-        })
-        .done(function () {
-            // Refresh the editor content to ensure all attachments are removed
-            if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-                CKEDITOR.instances.message.setData(cleanedEditorText);
+        let i = 0;
+        const removeAttachments = function() {
+            if (i < attachments.length) {
+                const attachment = attachments[i];
+                $.ajax({
+                    url: Joomla.getOptions('com_kunena.kunena_upload_files_rem'),
+                    type: 'POST',
+                    data: {
+                        files_id_delete: JSON.stringify([attachment.id]),
+                        editor_text: editor_text
+                    }
+                })
+                .done(function () {
+                    i++;
+                    removeAttachments();
+                })
+                .fail(function () {
+                    // TODO: handle the error of ajax request
+                    i++;
+                    removeAttachments();
+                });
             } else {
-                sceditor.instance(document.getElementById('message')).val(cleanedEditorText);
+                // Refresh the editor content to ensure all attachments are removed
+                if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+                    CKEDITOR.instances.message.setData(cleanedEditorText);
+                } else {
+                    sceditor.instance(document.getElementById('message')).val(cleanedEditorText);
+                }
+                $('#files').empty();
             }
-            $('#files').empty();
-        })
-        .fail(function () {
-            //TODO: handle the error of ajax request
-        });
+        };
+        removeAttachments();
     }
 
     $('#alert_max_file').remove();
 
     fileCount = 0;
 });
-
 
     $('#insert-all').bind('keypress keydown keyup', function(e){
 		if(e.keyCode == 13) { e.preventDefault(); }
