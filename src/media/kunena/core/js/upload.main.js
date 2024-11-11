@@ -97,7 +97,7 @@ jQuery(function ($) {
         }
     });
 
-   $('#remove-all').on('click', function (e) {
+  $('#remove-all').on('click', function (e) {
     e.preventDefault();
 
     $('#progress').hide();
@@ -181,77 +181,132 @@ jQuery(function ($) {
     fileCount = 0;
 });
 
-    $('#insert-all').bind('keypress keydown keyup', function(e){
-		if(e.keyCode == 13) { e.preventDefault(); }
-	});
-
     $('#insert-all').on('click', function (e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        const child = $('#kattach-list').find('input');
-        const files_id = [];
-        let content_to_inject = '';
+    const child = $('#kattach-list').find('input');
+    const files_id = [];
+    let content_to_inject = '';
 
-        child.each(function (i, el) {
-            const elem = $(el);
+    child.each(function (i, el) {
+        const elem = $(el);
 
-            if (!elem.attr('id').match("[a-z]{8}")) {
-                const attachid = elem.attr('id').match("[0-9]{1,8}");
-                const filename = elem.attr('placeholder');
+        if (!elem.attr('id').match("[a-z]{8}")) {
+            const attachid = elem.attr('id').match("[0-9]{1,8}");
+            const filename = elem.attr('placeholder');
 
-                content_to_inject += '[attachment=' + attachid + ']' + filename + '[/attachment]';
+            content_to_inject += '[attachment=' + attachid + ']' + filename + '[/attachment]';
 
-                $('#insert-all').removeClass('btn-primary');
-                $('#insert-all').addClass('btn-success');
-                $('#insert-all').html(Joomla.getOptions('com_kunena.icons.upload') + Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'));
-
-                files_id.push(attachid);
-            }
-        });
-
-        // Inserting items in message from edit if they aren't already present
-        if ($.isEmptyObject(filesedit) === false) {
-            const filesid_list = [];
-
-            $(filesedit).each(function (index, file) {
-                if (file.inline !== true) {
-                    content_to_inject += '[attachment=' + file.id + ']' + file.name + '[/attachment]';
-                    files_id.push(file.id);
-                }
-            });
-        }
-
-        // Prevent the press on enter key to press the button enter all when previously clicked
-        if ($('#message').length > 0)
-        {
-            if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-                CKEDITOR.instances.message.insertText(content_to_inject);
-            } else {
-                sceditor.instance(document.getElementById('message')).insert(content_to_inject);
-            }
-        }
-
-        $('#files .btn.btn-primary').each(function () {
-            $('#files .btn.btn-primary').addClass('btn-success');
-            $('#files .btn.btn-success').removeClass('btn-primary');
-            $('#files .btn.btn-success').html(Joomla.getOptions('com_kunena.icons.upload') + Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'));
-        });
-
-        $.ajax({
-            url: Joomla.getOptions('com_kunena.kunena_upload_files_set_inline') + '&files_id=' + JSON.stringify(files_id),
-            type: 'POST'
-        })
-            .done(function (data) {
-
-            })
-            .fail(function () {
-                //TODO: handle the error of ajax request
+            // Find all buttons in #files div
+            $('#files > div').each(function() {
+                const $buttons = $(this).find('button');
+                $buttons.each(function() {
+                    const $btn = $(this);
+                    // Check if this is the insert button (not private or remove button)
+                    if ($btn.hasClass('btn-primary') && 
+                        !$btn.hasClass('btn-danger') && 
+                        $btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT')) &&
+                        ($btn.data('result')?.data?.id == attachid || 
+                         $btn.data('id') == attachid)) {
+                            $btn.removeClass('btn-primary btn-outline-primary')
+                               .addClass('btn-success')
+                               .html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + 
+                                    Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'));
+                            
+                            // Hide the private button for this attachment
+                            $(this).siblings('button').each(function() {
+                                if ($(this).html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))) {
+                                    $(this).hide();
+                                }
+                            });
+                    }
+                });
             });
 
-        filesedit = null;
+            files_id.push(attachid);
+        }
     });
 
- 
+    // Update the Insert All button state
+    $('#insert-all').removeClass('btn-primary btn-outline-primary')
+                   .addClass('btn-success')
+                   .html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + 
+                        Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'));
+
+    // Hide the "Set all attachments private" button since they're now inline
+    if ($('#set-secure-all').length > 0) {
+        $('#set-secure-all').hide();
+    }
+
+    // Inserting items in message from edit if they aren't already present
+    if ($.isEmptyObject(filesedit) === false) {
+        $(filesedit).each(function (index, file) {
+            if (file.inline !== true) {
+                content_to_inject += '[attachment=' + file.id + ']' + file.name + '[/attachment]';
+                files_id.push(file.id);
+            }
+        });
+    }
+
+    // Insert content into message
+    if ($('#message').length > 0) {
+        if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+            CKEDITOR.instances.message.insertText(content_to_inject);
+        } else {
+            sceditor.instance(document.getElementById('message')).insert(content_to_inject);
+        }
+    }
+
+    $.ajax({
+        url: Joomla.getOptions('com_kunena.kunena_upload_files_set_inline') + '&files_id=' + JSON.stringify(files_id),
+        type: 'POST'
+    })
+    .done(function (data) {
+        // Success handler if needed
+    })
+    .fail(function () {
+        // TODO: handle the error of ajax request
+    });
+
+    filesedit = null;
+});
+
+    const setPrivateButton = $('<button>')
+        .addClass("btn btn-primary")
+        .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))
+        .on('click', function (e) {
+            // Make sure the button click doesn't submit the form:
+            e.preventDefault();
+            e.stopPropagation();
+
+        const $this = $(this),
+        data = $this.data();
+
+        let file_id = 0;
+        let filename = null;
+        if (data.result !== undefined) {
+            file_id = data.result.data.id;
+            filename = data.result.data.filename;
+        } else {
+            file_id = data.id;
+            filename = data.name;
+        }
+
+        const files_id = [];
+        files_id.push(file_id);
+
+        $.ajax({
+            url: Joomla.getOptions('com_kunena.kunena_upload_files_set_private') + '&files_id=' + JSON.stringify(files_id),
+            type: 'POST'
+        })
+        .done(function (data) {
+
+        })
+        .fail(function () {
+            //TODO: handle the error of ajax request
+        });
+    });
+
     const insertButton = $('<button>')
         .addClass("btn btn-primary")
         .html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT'))
