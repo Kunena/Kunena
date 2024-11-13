@@ -391,8 +391,8 @@ jQuery(function ($) {
                          Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENTS_ARE_SECURED'));
             } else if (anyNonPrivate) {
                 // If some attachments are not private, show both buttons
-                $('#insert-all').show();
-                $('#set-secure-all').show();
+                $('#insert-all').hide();
+                $('#set-secure-all').hide();
             }
         })
         .fail(function () {
