@@ -97,7 +97,7 @@ jQuery(function ($) {
                        .addClass('btn-success')
                        .prop('disabled', true)
                        .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                            Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+                            Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENT_IS_SECURED'));
                     
                     // Hide the corresponding insert button in the same container
                     $btn.siblings('button').each(function() {
@@ -115,7 +115,7 @@ jQuery(function ($) {
                  .addClass('btn-success')
                  .prop('disabled', true)
                  .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                      Joomla.Text._('COM_KUNENA_ALL_ATTACHMENTS_ARE_PRIVATE'));
+                      Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENTS_ARE_SECURED'));
 
             // Hide both insert and insert-all buttons
             $('button').each(function() {
@@ -324,7 +324,7 @@ jQuery(function ($) {
     filesedit = null;
 });
 
-     const setPrivateButton = $('<button>')
+      const setPrivateButton = $('<button>')
     .addClass("btn btn-primary")
     .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))
     .on('click', function (e) {
@@ -354,7 +354,7 @@ jQuery(function ($) {
                  .addClass('btn-success')
                  .prop('disabled', true)
                  .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                      Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+                      Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENT_IS_SECURED'));
             
             // Find and hide the insert button in the same container
             $this.siblings('button').each(function() {
@@ -367,18 +367,32 @@ jQuery(function ($) {
 
             // Check if all attachments are now private
             let allPrivate = true;
+            let anyNonPrivate = false;
             $('#files button').each(function() {
                 const $btn = $(this);
-                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT')) &&
-                    !$btn.prop('disabled')) {
-                    allPrivate = false;
-                    return false; // Break the loop
+                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))) {
+                    if (!$btn.prop('disabled')) {
+                        allPrivate = false;
+                        anyNonPrivate = true;
+                        return false; // Break the loop
+                    }
                 }
             });
 
-            // If all attachments are private, update the insert-all button
+            // Update global buttons based on state
             if (allPrivate) {
+                // If all attachments are private, hide both insert-all and set-secure-all
                 $('#insert-all').hide();
+                $('#set-secure-all')
+                    .removeClass('btn-primary')
+                    .addClass('btn-success')
+                    .prop('disabled', true)
+                    .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
+                         Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENTS_ARE_SECURED'));
+            } else if (anyNonPrivate) {
+                // If some attachments are not private, show both buttons
+                $('#insert-all').show();
+                $('#set-secure-all').show();
             }
         })
         .fail(function () {
@@ -730,7 +744,7 @@ jQuery(function ($) {
                                     .addClass('btn-success')
                                     .prop('disabled', true)
                                     .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                                         Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+                                         Joomla.Text._('COM_KUNENA_EDITOR_ATTACHMENT_IS_SECURED'));
                         }
                         
                         object.append(privateBtn);
