@@ -68,51 +68,73 @@ jQuery(function ($) {
     var fileeditinline = 0;
 
     $('#set-secure-all').on('click', function (e) {
-        e.preventDefault();
+    e.preventDefault();
 
-        const child = $('#kattach-list').find('input');
-        const filesidtosetprivate = [];
-        const $this = $(this);
+    const child = $('#kattach-list').find('input');
+    const filesidtosetprivate = [];
+    const $this = $(this);
 
-        child.each(function (i, el) {
-            const elem = $(el);
+    child.each(function (i, el) {
+        const elem = $(el);
 
-            if (!elem.attr('id').match("[a-z]{8}")) {
-                const fileid = elem.attr('id').match("[0-9]{1,8}");
-                filesidtosetprivate.push(fileid);
-            }
-        });
-
-        if (filesidtosetprivate.length !== 0) {
-            $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_set_private') + '&files_id=' + JSON.stringify(filesidtosetprivate),
-                type: 'POST'
-            })
-            .done(function (data) {
-                // Update all individual private buttons
-                $('#files button').each(function() {
-                    const $btn = $(this);
-                    if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))) {
-                        $btn.removeClass('btn-primary')
-                           .addClass('btn-success')
-                           .prop('disabled', true)
-                           .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                                Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
-                    }
-                });
-
-                // Update the set-secure-all button
-                $this.removeClass('btn-primary')
-                     .addClass('btn-success')
-                     .prop('disabled', true)
-                     .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                          Joomla.Text._('COM_KUNENA_ALL_ATTACHMENTS_ARE_PRIVATE'));
-            })
-            .fail(function () {
-                //TODO: handle the error of ajax request
-            });
+        if (!elem.attr('id').match("[a-z]{8}")) {
+            const fileid = elem.attr('id').match("[0-9]{1,8}");
+            filesidtosetprivate.push(fileid);
         }
     });
+
+    if (filesidtosetprivate.length !== 0) {
+        $.ajax({
+            url: Joomla.getOptions('com_kunena.kunena_upload_files_set_private') + '&files_id=' + JSON.stringify(filesidtosetprivate),
+            type: 'POST'
+        })
+        .done(function (data) {
+            // Update all individual private buttons
+            $('#files button').each(function() {
+                const $btn = $(this);
+                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))) {
+                    $btn.removeClass('btn-primary')
+                       .addClass('btn-success')
+                       .prop('disabled', true)
+                       .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
+                            Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+                    
+                    // Hide the corresponding insert button in the same container
+                    $btn.siblings('button').each(function() {
+                        const $siblingBtn = $(this);
+                        if ($siblingBtn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT')) ||
+                            $siblingBtn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'))) {
+                            $siblingBtn.hide();
+                        }
+                    });
+                }
+            });
+
+            // Update the set-secure-all button
+            $this.removeClass('btn-primary')
+                 .addClass('btn-success')
+                 .prop('disabled', true)
+                 .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
+                      Joomla.Text._('COM_KUNENA_ALL_ATTACHMENTS_ARE_PRIVATE'));
+
+            // Hide both insert and insert-all buttons
+            $('button').each(function() {
+                const $btn = $(this);
+                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT')) ||
+                    $btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE')) ||
+                    $btn.attr('id') === 'insert-all') {
+                    $btn.hide();
+                }
+            });
+
+            // Explicitly hide the insert-all button
+            $('#insert-all').hide();
+        })
+        .fail(function () {
+            //TODO: handle the error of ajax request
+        });
+    }
+});
 
   $('#remove-all').on('click', function (e) {
     e.preventDefault();
@@ -120,7 +142,7 @@ jQuery(function ($) {
     $('#progress').hide();
 
     // Reset insert-all button state
-    $('#insert-all').removeClass('btn-success').addClass('btn-primary');
+    $('#insert-all').removeClass('btn-success').addClass('btn-outline-primary');
     $('#insert-all').html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_UPLOADED_LABEL_INSERT_ALL_BUTTON'));
 
     // Hide action buttons
@@ -214,7 +236,7 @@ jQuery(function ($) {
 });
 
 
-    $('#insert-all').on('click', function (e) {
+   $('#insert-all').on('click', function (e) {
     e.preventDefault();
 
     const child = $('#kattach-list').find('input');
@@ -267,9 +289,7 @@ jQuery(function ($) {
                         Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'));
 
     // Hide the "Set all attachments private" button since they're now inline
-    if ($('#set-secure-all').length > 0) {
-        $('#set-secure-all').hide();
-    }
+    $('#set-secure-all').hide();
 
     // Inserting items in message from edit if they aren't already present
     if ($.isEmptyObject(filesedit) === false) {
@@ -304,79 +324,114 @@ jQuery(function ($) {
     filesedit = null;
 });
 
-      const setPrivateButton = $('<button>')
-        .addClass("btn btn-primary")
-        .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))
-        .on('click', function (e) {
-            e.preventDefault();
-            e.stopPropagation();
+     const setPrivateButton = $('<button>')
+    .addClass("btn btn-primary")
+    .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))
+    .on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-            const $this = $(this),
+        const $this = $(this),
+        data = $this.data();
+
+        let file_id = 0;
+        if (data.result !== undefined) {
+            file_id = data.result.data.id;
+        } else {
+            file_id = data.id;
+        }
+
+        const files_id = [];
+        files_id.push(file_id);
+
+        $.ajax({
+            url: Joomla.getOptions('com_kunena.kunena_upload_files_set_private') + '&files_id=' + JSON.stringify(files_id),
+            type: 'POST'
+        })
+        .done(function (data) {
+            // Update private button state
+            $this.removeClass('btn-primary')
+                 .addClass('btn-success')
+                 .prop('disabled', true)
+                 .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
+                      Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+            
+            // Find and hide the insert button in the same container
+            $this.siblings('button').each(function() {
+                const $btn = $(this);
+                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT')) ||
+                    $btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_IN_MESSAGE'))) {
+                    $btn.hide();
+                }
+            });
+
+            // Check if all attachments are now private
+            let allPrivate = true;
+            $('#files button').each(function() {
+                const $btn = $(this);
+                if ($btn.html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT')) &&
+                    !$btn.prop('disabled')) {
+                    allPrivate = false;
+                    return false; // Break the loop
+                }
+            });
+
+            // If all attachments are private, update the insert-all button
+            if (allPrivate) {
+                $('#insert-all').hide();
+            }
+        })
+        .fail(function () {
+            //TODO: handle the error of ajax request
+        });
+    });
+    const insertButton = $('<button>')
+    .addClass("btn btn-primary")
+    .html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT'))
+    .on('click', function (e) {
+        // Make sure the button click doesn't submit the form:
+        e.preventDefault();
+        e.stopPropagation();
+
+        const $this = $(this),
             data = $this.data();
 
-            let file_id = 0;
-            if (data.result !== undefined) {
-                file_id = data.result.data.id;
-            } else {
-                file_id = data.id;
+        let file_id = 0;
+        let filename = null;
+        if (data.result !== undefined) {
+            file_id = data.result.data.id;
+            filename = data.result.data.filename;
+        } else {
+            file_id = data.id;
+            filename = data.name;
+        }
+
+        insertInMessage(file_id, filename, $this);
+
+        const files_id = [];
+        files_id.push(file_id);
+
+        // Hide the private button for this attachment
+        $this.siblings('button').each(function() {
+            if ($(this).html().includes(Joomla.Text._('COM_KUNENA_EDITOR_INSERT_PRIVATE_ATTACHMENT'))) {
+                $(this).hide();
             }
+        });
 
-            const files_id = [];
-            files_id.push(file_id);
+        // Hide the set-secure-all button since we're inserting an attachment
+        $('#set-secure-all').hide();
 
-            $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_set_private') + '&files_id=' + JSON.stringify(files_id),
-                type: 'POST'
-            })
+        $.ajax({
+            url: Joomla.getOptions('com_kunena.kunena_upload_files_set_inline') + '&files_id=' + JSON.stringify(files_id),
+            type: 'POST'
+        })
             .done(function (data) {
-                $this.removeClass('btn-primary')
-                     .addClass('btn-success')
-                     .prop('disabled', true)
-                     .html(Joomla.getOptions('com_kunena.icons.secure') + ' ' + 
-                          Joomla.Text._('COM_KUNENA_ATTACHMENT_IS_PRIVATE'));
+                // Success handler if needed
             })
             .fail(function () {
                 //TODO: handle the error of ajax request
             });
-        });
-
-    const insertButton = $('<button>')
-        .addClass("btn btn-primary")
-        .html(Joomla.getOptions('com_kunena.icons.upload') + ' ' + Joomla.Text._('COM_KUNENA_EDITOR_INSERT'))
-        .on('click', function (e) {
-            // Make sure the button click doesn't submit the form:
-            e.preventDefault();
-            e.stopPropagation();
-
-            const $this = $(this),
-                data = $this.data();
-
-            let file_id = 0;
-            let filename = null;
-            if (data.result !== undefined) {
-                file_id = data.result.data.id;
-                filename = data.result.data.filename;
-            } else {
-                file_id = data.id;
-                filename = data.name;
-            }
-
-            insertInMessage(file_id, filename, $this);
-
-            const files_id = [];
-            files_id.push(file_id);
-
-            $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_set_inline') + '&files_id=' + JSON.stringify(files_id),
-                type: 'POST'
-            })
-                .done(function (data) {
-
-                })
-                .fail(function () {
-                    //TODO: handle the error of ajax request
-                });
-        });
+    });
 
    const removeButton = $('<button/>')
         .addClass('btn btn-danger')
