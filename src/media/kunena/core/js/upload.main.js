@@ -447,7 +447,7 @@ jQuery(function ($) {
             });
     });
 
-        const removeButton = $('<button/>')
+         const removeButton = $('<button/>')
         .addClass('btn btn-danger')
         .attr('type', 'button')
         .html(Joomla.getOptions('com_kunena.icons.trash') + ' ' + Joomla.Text._('COM_KUNENA_GEN_REMOVE_FILE'))
@@ -498,6 +498,17 @@ jQuery(function ($) {
                 editor_text = sceditor.instance(document.getElementById('message')).val();
             }
 
+            // Find and remove the attachment BBCode
+            const attachmentRegex = /\[attachment=[0-9]+\][^[\]]+\[\/attachment\]/g;
+            const cleanedEditorText = editor_text.replace(new RegExp('\\[attachment=' + file_id + '\\][^[\\]]+\\[/attachment\\]'), '');
+
+            // Update editor content with the cleaned text
+            if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
+                CKEDITOR.instances.message.setData(cleanedEditorText);
+            } else {
+                sceditor.instance(document.getElementById('message')).val(cleanedEditorText);
+            }
+
             const file_query_id = [file_id];
 
             // Enable submit button before AJAX call
@@ -505,21 +516,12 @@ jQuery(function ($) {
 
             // Ajax Request to delete the file
             $.ajax({
-                url: Joomla.getOptions('com_kunena.kunena_upload_files_rem') + '&files_id_delete=' + JSON.stringify(file_query_id) + '&editor_text=' + encodeURIComponent(editor_text),
+                url: Joomla.getOptions('com_kunena.kunena_upload_files_rem') + '&files_id_delete=' + JSON.stringify(file_query_id) + '&editor_text=' + encodeURIComponent(cleanedEditorText),
                 type: 'POST'
             })
             .done(function (data) {
                 // Remove the attachment container
                 $this.closest('div').remove();
-
-                // Update editor content if needed
-                if (data.text_prepared !== false) {
-                    if (Joomla.getOptions('com_kunena.ckeditor_config') !== undefined) {
-                        CKEDITOR.instances.message.setData(data.text_prepared);
-                    } else {
-                        sceditor.instance(document.getElementById('message')).val(data.text_prepared);
-                    }
-                }
 
                 // Ensure submit button is enabled after successful removal
                 setTimeout(function() {
@@ -539,6 +541,7 @@ jQuery(function ($) {
                 }, 200);
             });
         });
+
     $('#fileupload').fileupload({
     url: $('#kunena_upload_files_url').val(),
     dataType: 'json',
