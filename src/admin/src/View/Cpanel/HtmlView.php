@@ -58,9 +58,10 @@ class HtmlView extends BaseHtmlView
             Factory::getApplication()->getDocument()->getWebAssetManager()
                 ->registerAndUseScript('mod_sampledata', 'mod_sampledata/sampledata-process.js', [], ['defer' => true], ['core']);
 
+            Text::script('MOD_SAMPLEDATA_COMPLETED');
             Text::script('MOD_SAMPLEDATA_CONFIRM_START');
-            Text::script('MOD_SAMPLEDATA_ITEM_ALREADY_PROCESSED');
             Text::script('MOD_SAMPLEDATA_INVALID_RESPONSE');
+            Text::script('MOD_SAMPLEDATA_ITEM_ALREADY_PROCESSED');
 
             Factory::getApplication()->getDocument()->addScriptOptions(
                 'sample-data',
