@@ -17,10 +17,10 @@
 
 /* Smartphones */
 @media (max-width: 480px) {
-  #kunena.layout .table th, #kunena.layout .table td {
+  .table th, .table td {
 	display: grid;
 }
-  #kunena.layout #editUser .form-control, #kunena.layout #editUser .custom-select, #kunena.layout #editprofile .form-control, #kunena.layout #editprofile .custom-select, #kunena.layout #editavatar .form-control, #kunena.layout #editavatar .custom-select, #kunena.layout #editsettings .form-control, #kunena.layout #editsettings .custom-select {
+  #editUser .form-control, #editUser .custom-select, #editprofile .form-control, #editprofile .custom-select, #editavatar .form-control, #editavatar .custom-select, #editsettings .form-control, #editsettings .custom-select {
 	width: 100%!important;
 }
   .knav-collapse {
