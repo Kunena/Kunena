@@ -69,7 +69,7 @@ if (!isset($_POST['sample_data_choice']) && !KunenaForum::versionSampleData()) :
                                 <li class="list-group-item sampledata-kunena">
                                     <div class="d-flex flex-column">
                                         <div class="sample-data__title mb-3">
-                                            <?php echo Text::_('COM_KUNENA_SAMPLE_DATA_QUESTION'); ?>
+                                            <?php echo Text::_('COM_KUNENA_CPANEL_SAMPLE_DATA_QUESTION'); ?>
                                         </div>
                                         <div class="btn-group justify-content-center">
                                             <button type="submit" name="sample_data_choice" value="yes" class="btn btn-secondary btn-sm mx-1">
@@ -92,7 +92,7 @@ if (!isset($_POST['sample_data_choice']) && !KunenaForum::versionSampleData()) :
 <?php else :
     if (isset($_POST['sample_data_choice']) && $_POST['sample_data_choice'] === 'no') {
         setSampleDataFlag(1);
-        echo '<div class="alert alert-success">' . Text::_('COM_KUNENA_SAMPLEDATA_SKIPPED') . '</div>';
+        echo '<div class="alert alert-success">' . Text::_('COM_KUNENA_CPANEL_SAMPLE_DATA_SKIPPED') . '</div>';
     } elseif (isset($_POST['sample_data_choice']) && $_POST['sample_data_choice'] === 'yes') {
         if (!KunenaForum::versionSampleData()) : ?>
             <div class="row clearfix">
