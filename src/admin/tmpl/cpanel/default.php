@@ -34,7 +34,7 @@ use Kunena\Forum\Libraries\Version\KunenaVersion;
   <?php
 function setSampleDataFlag($value = 1)
 {
-    $db = JFactory::getDbo();
+    $db = Factory::getContainer()->get('DatabaseDriver');
     $query = $db->getQuery(true);
     
     $query->update($db->quoteName('#__kunena_version'))
