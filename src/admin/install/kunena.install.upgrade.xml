@@ -541,7 +541,7 @@
             <query mode="silenterror">ALTER TABLE `#__kunena_users` MODIFY birthdate date         NULL     DEFAULT '1000-01-01';</query>
         </version>
         <version version="6.4.0-RC4-DEV"
-                 versiondate="2025-01-16"
+                 versiondate="2025-02-11"
                  versionname="Internal">
             <phpfile name="6.4.0-2025-02-11_clean_configuration"/>
         </version>
