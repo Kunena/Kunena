@@ -194,7 +194,10 @@ abstract class KunenaUserHelper
         if ($id === 0) {
             KunenaProfiler::getInstance() ? KunenaProfiler::instance()->stop('function ' . __CLASS__ . '::' . __FUNCTION__ . '()') : null;
 
-            return new KunenaUser($id);
+            $newUser = new KunenaUser($id);
+            $newUser->userid = $id;
+            
+            return $newUser;
         } elseif ($reload || empty(self::$_instances [$id])) {
             self::$_instances [$id] = new KunenaUser($id);
 
