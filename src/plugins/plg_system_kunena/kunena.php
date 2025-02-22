@@ -89,9 +89,9 @@ class PlgSystemKunena extends CMSPlugin
             if ($this->app->scope == 'com_kunena') {
                 if (!PluginHelper::isEnabled('kunena', 'powered')) {
                     $styles = <<<EOF
-		.layout#kunena + div { display: block !important;}
-		#kunena + div { display: block !important;}
-EOF;
+                    .layout#kunena + div { display: block !important;}
+                    #kunena + div { display: block !important;}
+                    EOF;
 
                     KunenaTemplate::getInstance()->addStyleDeclaration($styles);
                 }
@@ -109,7 +109,7 @@ EOF;
         $this->loadLanguage('plg_system_kunena.sys');
     }
 
-/**
+    /**
      * After initialise.
      *
      * @return  void

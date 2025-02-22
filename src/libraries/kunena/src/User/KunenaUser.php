@@ -397,8 +397,10 @@ class KunenaUser
             $this->load($identifier);
         }
 
-        if (!isset($this->userid)) {
+        if (!isset($identifier)) {
             $this->userid = 0;
+        } else {            
+            $this->userid = $identifier;
         }
 
         $this->_db     = Factory::getContainer()->get('DatabaseDriver');
